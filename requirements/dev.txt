@@ -1,0 +1,5 @@
+-r build.txt
+pytest>=8
+pip-audit
+pip-licenses
+pyyaml>=6              # dev only (MIT): static check of the CI workflow file

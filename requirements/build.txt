@@ -1,0 +1,3 @@
+-r gui.txt
+-r ocr.txt
+pyinstaller>=6.10

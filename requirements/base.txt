@@ -1,0 +1,17 @@
+# Runtime dependencies of the conversion engine (no GUI). Lower bounds = secure minimums;
+# upper bounds stop silent major upgrades. Re-run the full test suite whenever these change.
+pdfplumber>=0.11.9,<0.12
+pdfminer.six>=20251230
+# SECURITY: pypdf < 6.14.1 has published denial-of-service advisories (see docs/SECURITY_MODEL.md).
+# The test-suite in this repository was executed with pypdf 5.9.0 only (offline sandbox).
+# Running the suite against pypdf >= 6.14.1 is a RELEASE BLOCKER (docs/RELEASE_CHECKLIST.md).
+pypdf>=6.14.1,<7
+python-docx>=1.2,<2
+python-pptx>=1.0.2,<2
+openpyxl>=3.1.5,<4
+defusedxml>=0.7.1          # lets openpyxl refuse XML entity attacks
+reportlab>=4.4.10,<5       # open-source (BSD) edition
+Pillow>=12.1.1
+numpy>=1.26           # BSD-3: table detection in pictures (image -> Excel)
+lxml>=6.0.2
+cryptography>=46           # AES-encrypted PDFs, license + update signature verification

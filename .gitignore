@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and local configuration (never commit these)
+.env
+.env.*
+*.pem
+*.pfx
+*.p12
+*.key
+secrets.*
+
+# Build output
+build/
+dist/
+*.spec.bak
+*.msix
+*.exe
+*.msi
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local test artefacts
+*.part
+.pdftool-*
+licenses-report.md

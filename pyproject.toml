@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proconvert-studio"
+dynamic = ["version", "dependencies"]
+description = "Local-first desktop converter for PDF, Word, PowerPoint and Excel documents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "LUQ-07" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: Microsoft :: Windows",
+  "Topic :: Office/Business",
+  "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Repository = "https://github.com/LUQ-07/prodoc-suite"
+Issues = "https://github.com/LUQ-07/prodoc-suite/issues"
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.7,<7"]
+ocr = ["pypdfium2>=5.6,<6", "pytesseract>=0.3.13"]
+
+[project.scripts]
+proconvert = "proconvert.cli:main"
+
+[project.gui-scripts]
+proconvert-studio = "proconvert.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "proconvert.__version__" }
+dependencies = { file = ["requirements/base.txt"] }
+
+[tool.setuptools.packages.find]
+include = ["proconvert*"]
+
+[tool.setuptools.package-data]
+proconvert = ["assets/*", "assets/fonts/*", "localization/locales/*.json"]

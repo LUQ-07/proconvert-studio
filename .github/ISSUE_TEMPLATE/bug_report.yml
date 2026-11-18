@@ -1,0 +1,43 @@
+name: Bug report
+description: A conversion fails, looks wrong, or the app misbehaves
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Do not attach private documents.** A small example file with fake content is perfect.
+        For security problems use the *Security* tab instead (see SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: Program version
+      description: Shown on the About page, for example 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: conversion
+    attributes:
+      label: Which conversion?
+      options: [PDF to Word, PDF to PowerPoint, PDF to Excel, Word to PDF, Word to PowerPoint, Word to Excel, PowerPoint to PDF, PowerPoint to Word, PowerPoint to Excel, Excel to PDF, Excel to Word, Excel to PowerPoint, Images to PDF/Word/PowerPoint, Image of a table to Excel, Something else]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: input
+    id: system
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 23H2
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics (optional)
+      description: Paste the text from Settings > Advanced > Export diagnostics, or attach the zip. It never contains document content.

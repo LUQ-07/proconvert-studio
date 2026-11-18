@@ -1,0 +1,95 @@
+# CI for ProConvert Studio. The product ships ONLY on Windows (Microsoft Store), so every job runs on Windows.
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (windows)
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - name: Install the pinned dependency set
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/dev.txt pytest-qt
+          python -c "import pypdf; from packaging.version import Version as V; assert V(pypdf.__version__) >= V('6.14.1'), pypdf.__version__"
+      - name: Test suite (engine, CLI, packaging metadata)
+        run: python tools/run_tests.py
+      - name: GUI tests (pytest-qt, offscreen) - runs only if tests/qt exists
+        shell: bash
+        run: if [ -d tests/qt ]; then python -m pytest tests/qt -q; else echo "no tests/qt yet"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: test-report-windows, path: docs/TEST_REPORT.md }
+
+  supply-chain:
+    name: supply-chain (windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      # Only the SHIPPED dependency set (+ the two checkers). Build tools such as PyInstaller are NOT installed here.
+      - run: python -m pip install -r requirements/gui.txt pip-audit pip-licenses
+      - name: pip-audit (fails on known vulnerabilities)
+        run: python -m pip_audit -r requirements/base.txt -r requirements/gui.txt
+      - name: pip-licenses (fail on copyleft in the shipped set)
+        shell: bash
+        run: |
+          pip-licenses --format=markdown --with-urls --output-file=licenses-report.md
+          pip-licenses --ignore-packages pip-licenses pip-audit --fail-on="GNU Affero General Public License v3 (AGPLv3);GNU General Public License v3 (GPLv3);GNU General Public License v2 (GPLv2)"
+      - uses: actions/upload-artifact@v4
+        with: { name: licenses-report, path: licenses-report.md }
+
+  build:
+    name: frozen build (windows)
+    needs: test
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: python -m pip install -r requirements/build.txt
+      - run: pyinstaller --noconfirm --clean packaging/pyinstaller/proconvert.spec
+      - name: Verify the frozen executable (self-test of all 12 routes)
+        run: python packaging/verify_build.py dist/ProConvertStudio/ProConvertStudio.exe
+      - name: Report the size of the frozen app
+        shell: pwsh
+        run: |
+          $mb = [math]::Round((Get-ChildItem dist/ProConvertStudio -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 1)
+          "Frozen app size: $mb MB (uncompressed)" | Tee-Object -Append $env:GITHUB_STEP_SUMMARY
+          Get-ChildItem dist/ProConvertStudio -Recurse -File | Sort-Object Length -Descending | Select-Object -First 12 @{n='MB';e={[math]::Round($_.Length/1MB,1)}}, FullName | Format-Table -AutoSize | Out-String | Tee-Object -Append $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v4
+        with: { name: frozen-windows, path: dist/, retention-days: 7 }
+
+  msix:
+    name: msix package (windows, unsigned, experimental)
+    needs: build
+    runs-on: windows-latest
+    continue-on-error: true      # authored but never run; must not block the other jobs until it has been seen working
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: python -m pip install -r requirements/base.txt
+      - uses: actions/download-artifact@v4
+        with: { name: frozen-windows, path: dist }
+      - name: Build an unsigned MSIX with placeholder identity (CI smoke test only; NOT uploadable to the Store)
+        run: >
+          ./packaging/windows/msix/build_msix.ps1 -IdentityName "CI.ProConvertStudio"
+          -Publisher "CN=CI" -PublisherDisplayName "CI"
+      - uses: actions/upload-artifact@v4
+        with: { name: msix-unsigned, path: dist/ProConvertStudio.msix }
